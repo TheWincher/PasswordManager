@@ -1,11 +1,13 @@
-#[derive(Clone, PartialEq)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum PasswordStrength {
     Strong,
     Medium,
     Weak,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Entry {
     pub title: String,
     pub username: String,
@@ -16,9 +18,10 @@ pub struct Entry {
     pub two_factor: bool,
     pub is_old: bool,
     pub is_reused: bool,
+    pub password: String,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Group {
     pub name: String,
     pub icon: &'static str,

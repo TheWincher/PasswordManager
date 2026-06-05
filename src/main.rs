@@ -7,7 +7,10 @@ use ratatui::{Terminal, prelude::*};
 use std::io;
 
 mod app;
+mod clipboard;
+mod crypto;
 mod ui;
+mod vault;
 
 use app::App;
 

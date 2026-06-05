@@ -1,5 +1,7 @@
 use crate::app::audit::AuditCategory;
 use crate::app::state::*;
+use crate::clipboard;
+use crate::vault::{self, VaultError};
 use crossterm::event::KeyCode;
 
 pub fn handle_key(app: &mut crate::app::App, key: KeyCode) {
@@ -15,13 +17,26 @@ pub fn handle_key(app: &mut crate::app::App, key: KeyCode) {
 fn handle_locked(app: &mut crate::app::App, key: KeyCode) {
     match key {
         KeyCode::Enter => {
-            if app.master_password == "passui" {
-                app.mode = AppMode::Normal;
-                app.master_password.clear();
-                app.unlock_error = false;
-            } else {
-                app.unlock_error = true;
-                app.master_password.clear();
+            let load_result = vault::load(&app.master_password, &app.vault_path);
+            match load_result {
+                Ok(entries) => {
+                    app.mode = AppMode::Normal;
+                    app.master_password.clear();
+                    app.unlock_error = false;
+                    app.entries = entries;
+                    update_filter(app);
+                }
+                Err(VaultError::Io(_)) => {
+                    // premier lancement, vault n'existe pas encore
+                    app.mode = AppMode::Normal;
+                    app.entries = vec![];
+                    app.unlock_error = false;
+                }
+                Err(_) => {
+                    // mauvais mot de passe ou fichier corrompu
+                    app.unlock_error = true;
+                    app.master_password.clear();
+                }
             }
         }
         KeyCode::Backspace => {
@@ -37,6 +52,7 @@ fn handle_locked(app: &mut crate::app::App, key: KeyCode) {
 }
 
 fn handle_normal(app: &mut crate::app::App, key: KeyCode) {
+    app.clipboard_msg = None;
     match key {
         KeyCode::Tab => cycle_focus(app),
         KeyCode::Up | KeyCode::Char('k') => move_up(app),
@@ -44,6 +60,23 @@ fn handle_normal(app: &mut crate::app::App, key: KeyCode) {
         KeyCode::Char('n') => {
             app.mode = AppMode::Popup;
             app.form = NewEntryForm::new();
+        }
+        KeyCode::Char('d') => {
+            if app.selected_entry().is_some() {
+                app.entries.remove(app.filtered_indices[app.selected_entry]);
+                update_filter(app);
+                match app.save() {
+                    Ok(_) => app.clipboard_msg = Some("✓ Mot de passe supprimé".to_string()),
+                    Err(_) => {
+                        app.clipboard_msg = Some("✗ Erreur lors de la suppréssion".to_string())
+                    }
+                };
+
+                // Cas où on supprime la dernière entrée de la liste
+                if app.selected_entry >= app.filtered_indices.len() && app.selected_entry > 0 {
+                    app.selected_entry -= 1;
+                }
+            }
         }
         KeyCode::Char('/') => {
             app.mode = AppMode::Search;
@@ -60,6 +93,22 @@ fn handle_normal(app: &mut crate::app::App, key: KeyCode) {
             app.mode = AppMode::Locked;
             app.master_password.clear();
             app.unlock_error = false;
+        }
+        KeyCode::Char('y') => {
+            if let Some(entry) = app.selected_entry() {
+                app.clipboard_msg = match clipboard::copy(&entry.username) {
+                    Ok(_) => Some("✓ Identifiant copié".to_string()),
+                    Err(_) => Some("✗ Erreur de copie".to_string()),
+                };
+            }
+        }
+        KeyCode::Char('p') => {
+            if let Some(entry) = app.selected_entry() {
+                app.clipboard_msg = match clipboard::copy(&entry.password) {
+                    Ok(_) => Some("✓ Mot de passe copié".to_string()),
+                    Err(_) => Some("✗ Erreur de copie".to_string()),
+                };
+            }
         }
         _ => {}
     }
@@ -93,8 +142,15 @@ fn handle_popup(app: &mut crate::app::App, key: KeyCode) {
                     two_factor: false,
                     is_old: false,
                     is_reused: false,
+                    password: f[3].clone(),
                 });
                 app.selected_entry = app.entries.len() - 1;
+                match app.save() {
+                    Ok(_) => app.clipboard_msg = Some("✓ Mot de passe ajouté".to_string()),
+                    Err(_) => app.clipboard_msg = Some("✗ Erreur lors de l'ajout".to_string()),
+                };
+
+                update_filter(app);
             }
             app.mode = AppMode::Normal;
         }

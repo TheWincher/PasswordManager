@@ -1,6 +1,6 @@
 use ratatui::{
     Frame,
-    layout::Rect,
+    layout::{Alignment, Constraint, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
     widgets::Paragraph,
@@ -32,6 +32,8 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
         ),
     };
 
+    let chunks = Layout::horizontal([Constraint::Min(0), Constraint::Length(30)]).split(area);
+
     let text = Paragraph::new(Line::from(vec![
         Span::styled(mode_text, mode_style),
         Span::raw("  vault: "),
@@ -41,5 +43,18 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     ]))
     .style(Style::new().bg(Color::DarkGray));
 
-    frame.render_widget(text, area);
+    frame.render_widget(text, chunks[0]);
+    if let Some(msg) = &app.clipboard_msg {
+        let msg_style = if msg.starts_with('✓') {
+            Style::new().fg(Color::Green)
+        } else {
+            Style::new().fg(Color::Red)
+        };
+
+        let msg_widget = Paragraph::new(Line::from(vec![Span::styled(msg, msg_style)]))
+            .style(Style::new().bg(Color::DarkGray))
+            .alignment(Alignment::Right);
+
+        frame.render_widget(msg_widget, chunks[1]);
+    }
 }
