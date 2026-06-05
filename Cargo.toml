@@ -6,3 +6,6 @@ edition = "2024"
 [dependencies]
 ratatui = "0.30.0"
 crossterm = "0.29.0"
+argon2 = "0.5"
+aes-gcm = "0.10"
+rand = "0.10.1"
