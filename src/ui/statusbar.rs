@@ -30,6 +30,10 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
             " AUDIT  ",
             Style::new().bg(Color::Magenta).fg(Color::Black).bold(),
         ),
+        AppMode::ConfirmDelete => (
+            " DELETE  ",
+            Style::new().bg(Color::Magenta).fg(Color::Black).bold(),
+        ),
     };
 
     let chunks = Layout::horizontal([Constraint::Min(0), Constraint::Length(30)]).split(area);

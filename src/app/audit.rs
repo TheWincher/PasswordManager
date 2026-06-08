@@ -1,4 +1,14 @@
-use crate::app::state::{Entry, PasswordStrength};
+use chrono::NaiveDate;
+use serde::{Deserialize, Serialize};
+
+use crate::app::state::Entry;
+
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
+pub enum PasswordStrength {
+    Strong,
+    Medium,
+    Weak,
+}
 
 #[derive(PartialEq, Clone)]
 pub enum AuditCategory {
@@ -42,13 +52,22 @@ impl AuditCategory {
 pub fn entries_for_category<'a>(entries: &'a [Entry], cat: &AuditCategory) -> Vec<&'a Entry> {
     entries
         .iter()
-        .filter(|e| match cat {
-            AuditCategory::Weak => e.strength == PasswordStrength::Weak,
-            AuditCategory::Reused => e.is_reused,
-            AuditCategory::Old => e.is_old,
-            AuditCategory::NoTwoFactor => !e.two_factor,
-            AuditCategory::Ok => {
-                e.strength != PasswordStrength::Weak && !e.is_reused && !e.is_old && e.two_factor
+        .filter(|e| {
+            let password_strength = password_strength(&e.password);
+            let is_reused = is_reused(e, entries);
+            let is_old = is_old(&e.last_modified);
+
+            match cat {
+                AuditCategory::Weak => password_strength == PasswordStrength::Weak,
+                AuditCategory::Reused => is_reused,
+                AuditCategory::Old => is_old,
+                AuditCategory::NoTwoFactor => !e.two_factor,
+                AuditCategory::Ok => {
+                    password_strength != PasswordStrength::Weak
+                        && !is_reused
+                        && !is_old
+                        && e.two_factor
+                }
             }
         })
         .collect()
@@ -62,8 +81,62 @@ pub fn audit_score(entries: &[Entry]) -> u8 {
     let ok = entries
         .iter()
         .filter(|e| {
-            e.strength != PasswordStrength::Weak && !e.is_reused && !e.is_old && e.two_factor
+            password_strength(&e.password) != PasswordStrength::Weak
+                && !is_reused(e, entries)
+                && !is_old(&e.last_modified)
+                && e.two_factor
         })
         .count() as f32;
     ((ok / total) * 100.0) as u8
+}
+
+pub fn password_strength(password: &str) -> PasswordStrength {
+    let mut score = 0;
+
+    if password.len() >= 8 {
+        score += 1;
+    }
+
+    if password.chars().any(|c| c.is_lowercase()) {
+        score += 1;
+    }
+
+    if password.chars().any(|c| c.is_uppercase()) {
+        score += 1;
+    }
+
+    if password.chars().any(|c| c.is_numeric()) {
+        score += 1;
+    }
+
+    if password.chars().any(|c| c.is_ascii_punctuation()) {
+        score += 1;
+    }
+
+    if score >= 4 {
+        PasswordStrength::Strong
+    } else if score >= 2 {
+        PasswordStrength::Medium
+    } else {
+        PasswordStrength::Weak
+    }
+}
+
+fn is_old(last_modified: &str) -> bool {
+    let Ok(date) = NaiveDate::parse_from_str(last_modified, "%Y-%m-%d") else {
+        return false;
+    };
+
+    chrono::Local::now()
+        .date_naive()
+        .signed_duration_since(date)
+        .num_days()
+        > 365
+}
+
+fn is_reused(entry: &Entry, all_entries: &[Entry]) -> bool {
+    all_entries
+        .iter()
+        .filter(|e| !std::ptr::eq(*e, entry))
+        .any(|e| e.password == entry.password)
 }

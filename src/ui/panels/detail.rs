@@ -6,7 +6,10 @@ use ratatui::{
     widgets::{Block, Paragraph, Wrap},
 };
 
-use crate::app::{App, FocusedPanel, PasswordStrength};
+use crate::app::{
+    App, FocusedPanel,
+    audit::{self, PasswordStrength},
+};
 
 pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     let focused = app.focus == FocusedPanel::Detail;
@@ -29,7 +32,7 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
         return;
     };
 
-    let strength_span = match entry.strength {
+    let strength_span = match audit::password_strength(&entry.password) {
         PasswordStrength::Strong => Span::styled("● Forte", Style::new().fg(Color::Green)),
         PasswordStrength::Medium => Span::styled("● Moyenne", Style::new().fg(Color::Yellow)),
         PasswordStrength::Weak => Span::styled("● Faible", Style::new().fg(Color::Red)),

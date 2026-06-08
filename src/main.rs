@@ -17,6 +17,12 @@ use app::App;
 use crate::app::AppMode;
 
 fn main() -> io::Result<()> {
+    let log_file = std::fs::File::create("/tmp/passui.log").unwrap();
+    env_logger::Builder::new()
+        .target(env_logger::Target::Pipe(Box::new(log_file)))
+        .filter_level(log::LevelFilter::Debug)
+        .init();
+
     // Setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();

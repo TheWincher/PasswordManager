@@ -9,6 +9,7 @@ use crate::{
     crypto::{self, CryptoError},
 };
 
+#[derive(Debug)]
 pub enum VaultError {
     Io(std::io::Error),
     Crypto(CryptoError),
@@ -50,6 +51,7 @@ pub fn save(entries: &[Entry], password: &str, path: &Path) -> Result<(), VaultE
 
 pub fn load(password: &str, path: &Path) -> Result<Vec<Entry>, VaultError> {
     let serialized_vault = std::fs::read(path).map_err(VaultError::Io)?;
+
     let vault_file = serde_json::from_slice::<VaultFile>(&serialized_vault)
         .map_err(VaultError::Deserialization)?;
 

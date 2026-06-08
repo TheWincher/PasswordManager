@@ -1,23 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
-pub enum PasswordStrength {
-    Strong,
-    Medium,
-    Weak,
-}
-
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Entry {
     pub title: String,
     pub username: String,
     pub url: String,
-    pub strength: PasswordStrength,
     pub tags: Vec<String>,
     pub last_modified: String,
     pub two_factor: bool,
-    pub is_old: bool,
-    pub is_reused: bool,
     pub password: String,
 }
 
@@ -34,6 +24,7 @@ pub enum AppMode {
     Popup,
     Search,
     Audit,
+    ConfirmDelete,
 }
 
 #[derive(PartialEq)]
@@ -52,6 +43,7 @@ pub enum AuditFocus {
 pub struct NewEntryForm {
     pub fields: [String; 4],
     pub focused_field: usize,
+    pub editing_index: Option<usize>,
 }
 
 impl NewEntryForm {
@@ -59,6 +51,7 @@ impl NewEntryForm {
         Self {
             fields: [String::new(), String::new(), String::new(), String::new()],
             focused_field: 0,
+            editing_index: None,
         }
     }
     pub fn field_names() -> [&'static str; 4] {

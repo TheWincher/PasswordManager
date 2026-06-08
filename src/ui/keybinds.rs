@@ -19,6 +19,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
             key_hint("j/k", "naviguer"),
             key_hint("n", "nouveau"),
             key_hint("e", "éditer"),
+            key_hint("d", "supprimer"),
             key_hint("y", "copier login"),
             key_hint("/", "rechercher"),
             key_hint("a", "audit"),
@@ -42,6 +43,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
             key_hint("e", "éditer entrée"),
             key_hint("Esc", "retour"),
         ],
+        AppMode::ConfirmDelete => vec![key_hint("y", "Supprimer"), key_hint("n", "Annuler")],
     };
 
     let mut spans = vec![];

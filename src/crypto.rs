@@ -1,10 +1,11 @@
-use aes_gcm::{Aes256Gcm, KeyInit, Nonce, aead::Aead};
+use aes_gcm::{Aes256Gcm, Error, KeyInit, Nonce, aead::Aead};
 use argon2::Argon2;
 use rand::RngExt;
 
+#[derive(Debug)]
 pub enum CryptoError {
     EncryptFailed,
-    DecryptFailed,
+    DecryptFailed(Error),
     DeriveKeyFailed,
 }
 
@@ -35,5 +36,5 @@ pub fn decrypt(
 ) -> Result<Vec<u8>, CryptoError> {
     let aes = Aes256Gcm::new(key.into());
     aes.decrypt(Nonce::from_slice(nonce), ciphertext)
-        .map_err(|_| CryptoError::DecryptFailed)
+        .map_err(CryptoError::DecryptFailed)
 }

@@ -1,4 +1,5 @@
 pub mod audit;
+pub mod confirm_delete;
 pub mod keybinds;
 pub mod locked;
 pub mod panels;
@@ -53,6 +54,8 @@ pub fn render(frame: &mut Frame, app: &App) {
 
     if app.mode == AppMode::Popup {
         popup::render(frame, app, area);
+    } else if app.mode == AppMode::ConfirmDelete {
+        confirm_delete::render(frame, app, area);
     }
 }
 

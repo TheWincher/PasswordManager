@@ -17,8 +17,14 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     // On efface la zone derrière (effet overlay)
     frame.render_widget(Clear, popup_area);
 
+    let title = if app.form.editing_index.is_some() {
+        " ✎ Éditer l'entrée "
+    } else {
+        " ✚ Nouvelle entrée "
+    };
+
     let block = Block::bordered()
-        .title(" ✚ Nouvelle entrée ")
+        .title(title)
         .border_style(Style::new().fg(Color::Blue))
         .style(Style::new().bg(Color::Reset));
 

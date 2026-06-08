@@ -6,7 +6,10 @@ use ratatui::{
     widgets::{Block, List, ListItem, ListState},
 };
 
-use crate::app::{App, FocusedPanel, PasswordStrength};
+use crate::app::{
+    App, FocusedPanel,
+    audit::{self, PasswordStrength},
+};
 
 pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     let focused = app.focus == FocusedPanel::Entries;
@@ -28,7 +31,7 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     let items: Vec<ListItem> = entries
         .iter()
         .map(|e| {
-            let dot = match e.strength {
+            let dot = match audit::password_strength(&e.password) {
                 PasswordStrength::Strong => Span::styled("● ", Style::new().fg(Color::Green)),
                 PasswordStrength::Medium => Span::styled("● ", Style::new().fg(Color::Yellow)),
                 PasswordStrength::Weak => Span::styled("● ", Style::new().fg(Color::Red)),
