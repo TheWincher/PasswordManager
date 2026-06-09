@@ -54,6 +54,6 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
         spans.push(h);
     }
 
-    let text = Paragraph::new(Line::from(spans)).style(Style::new().bg(Color::DarkGray));
+    let text = Paragraph::new(Line::from(spans));
     frame.render_widget(text, area);
 }

@@ -177,6 +177,7 @@ fn handle_popup(app: &mut crate::app::App, key: KeyCode) {
                             last_modified: "2026-06-04".into(),
                             two_factor: false,
                             password: f[3].clone(),
+                            group: app.groups[app.selected_group].name.clone(),
                         });
                         app.selected_entry = app.entries.len() - 1;
 
@@ -306,6 +307,8 @@ fn move_up(app: &mut crate::app::App) {
         }
         _ => {}
     }
+
+    update_filter(app);
 }
 
 fn move_down(app: &mut crate::app::App) {
@@ -322,6 +325,8 @@ fn move_down(app: &mut crate::app::App) {
         }
         _ => {}
     }
+
+    update_filter(app);
 }
 
 pub fn update_filter(app: &mut crate::app::App) {
@@ -331,11 +336,13 @@ pub fn update_filter(app: &mut crate::app::App) {
         .iter()
         .enumerate()
         .filter(|(_, e)| {
-            q.is_empty()
-                || e.title.to_lowercase().contains(&q)
-                || e.url.to_lowercase().contains(&q)
-                || e.username.to_lowercase().contains(&q)
-                || e.tags.iter().any(|t| t.to_lowercase().contains(&q))
+            (e.group == app.groups[app.selected_group].name
+                || app.groups[app.selected_group].name == "Tous")
+                && (q.is_empty()
+                    || e.title.to_lowercase().contains(&q)
+                    || e.url.to_lowercase().contains(&q)
+                    || e.username.to_lowercase().contains(&q)
+                    || e.tags.iter().any(|t| t.to_lowercase().contains(&q)))
         })
         .map(|(i, _)| i)
         .collect();

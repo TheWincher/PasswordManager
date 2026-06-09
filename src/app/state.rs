@@ -9,6 +9,7 @@ pub struct Entry {
     pub last_modified: String,
     pub two_factor: bool,
     pub password: String,
+    pub group: String,
 }
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]

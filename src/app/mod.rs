@@ -38,6 +38,10 @@ impl App {
         Self {
             groups: vec![
                 Group {
+                    name: "Tous".into(),
+                    icon: "★",
+                },
+                Group {
                     name: "Web".into(),
                     icon: "🌐",
                 },

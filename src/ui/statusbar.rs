@@ -16,23 +16,23 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
         ),
         AppMode::Normal => (
             " NORMAL ",
-            Style::new().bg(Color::Blue).fg(Color::Black).bold(),
+            Style::new().bg(Color::Blue).fg(Color::White).bold(),
         ),
         AppMode::Popup => (
             " INSERT ",
-            Style::new().bg(Color::Green).fg(Color::Black).bold(),
+            Style::new().bg(Color::Green).fg(Color::White).bold(),
         ),
         AppMode::Search => (
             " SEARCH ",
-            Style::new().bg(Color::Yellow).fg(Color::Black).bold(),
+            Style::new().bg(Color::Yellow).fg(Color::White).bold(),
         ),
         AppMode::Audit => (
             " AUDIT  ",
-            Style::new().bg(Color::Magenta).fg(Color::Black).bold(),
+            Style::new().bg(Color::Magenta).fg(Color::White).bold(),
         ),
         AppMode::ConfirmDelete => (
             " DELETE  ",
-            Style::new().bg(Color::Magenta).fg(Color::Black).bold(),
+            Style::new().bg(Color::LightRed).fg(Color::White).bold(),
         ),
     };
 
@@ -41,11 +41,13 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     let text = Paragraph::new(Line::from(vec![
         Span::styled(mode_text, mode_style),
         Span::raw("  vault: "),
-        Span::styled("personal.vault", Style::new().bold()),
+        Span::styled(app.vault_path.to_string_lossy(), Style::new().bold()),
         Span::raw("                    "),
-        Span::styled("42 entries  🔒", Style::new().fg(Color::DarkGray)),
-    ]))
-    .style(Style::new().bg(Color::DarkGray));
+        Span::styled(
+            format!("{} entries  🔒", app.entries.len()),
+            Style::new().fg(Color::DarkGray),
+        ),
+    ]));
 
     frame.render_widget(text, chunks[0]);
     if let Some(msg) = &app.clipboard_msg {
