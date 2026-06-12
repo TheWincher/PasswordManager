@@ -26,6 +26,8 @@ pub enum AppMode {
     Search,
     Audit,
     ConfirmDelete,
+    NewGroup,
+    ConfirmDeleteGroup,
 }
 
 #[derive(PartialEq)]

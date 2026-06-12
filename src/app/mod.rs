@@ -28,6 +28,7 @@ pub struct App {
     pub unlock_error: bool,
     pub vault_path: PathBuf,
     pub clipboard_msg: Option<String>,
+    pub new_group_input: String,
 }
 
 impl App {
@@ -70,6 +71,7 @@ impl App {
             audit_entry: 0,
             audit_focus: AuditFocus::Categories,
             master_password: String::new(),
+            new_group_input: String::new(),
             unlock_error: false,
             vault_path: dirs::home_dir()
                 .unwrap()
@@ -104,6 +106,13 @@ impl App {
     }
 
     pub fn save(&self) -> Result<(), vault::VaultError> {
-        vault::save(&self.entries, &self.master_password, &self.vault_path)
+        vault::save(
+            &vault::VaultData {
+                groups: self.groups.clone(),
+                entries: self.entries.clone(),
+            },
+            &self.master_password,
+            &self.vault_path,
+        )
     }
 }

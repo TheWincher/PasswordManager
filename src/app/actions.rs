@@ -12,6 +12,8 @@ pub fn handle_key(app: &mut crate::app::App, key: KeyCode) {
         AppMode::Search => handle_search(app, key),
         AppMode::Audit => handle_audit(app, key),
         AppMode::ConfirmDelete => handle_confirm_delete(app, key),
+        AppMode::NewGroup => handle_new_group(app, key),
+        AppMode::ConfirmDeleteGroup => handle_confirm_delete_group(app, key),
     }
 }
 
@@ -20,10 +22,11 @@ fn handle_locked(app: &mut crate::app::App, key: KeyCode) {
         KeyCode::Enter => {
             let load_result = vault::load(&app.master_password, &app.vault_path);
             match load_result {
-                Ok(entries) => {
+                Ok(data) => {
                     app.mode = AppMode::Normal;
                     app.unlock_error = false;
-                    app.entries = entries;
+                    app.entries = data.entries;
+                    app.groups = data.groups;
                     update_filter(app);
                 }
                 Err(VaultError::Io(_)) => {
@@ -59,11 +62,22 @@ fn handle_normal(app: &mut crate::app::App, key: KeyCode) {
         KeyCode::Up | KeyCode::Char('k') => move_up(app),
         KeyCode::Down | KeyCode::Char('j') => move_down(app),
         KeyCode::Char('n') => {
-            app.mode = AppMode::Popup;
-            app.form = NewEntryForm::new();
+            if app.focus == FocusedPanel::Groups {
+                app.mode = AppMode::NewGroup;
+                app.new_group_input = String::new();
+            } else {
+                app.mode = AppMode::Popup;
+                app.form = NewEntryForm::new();
+            }
         }
         KeyCode::Char('d') => {
-            if app.selected_entry().is_some() {
+            if app.focus == FocusedPanel::Groups {
+                if app.groups[app.selected_group].name == "Tous" {
+                    return;
+                }
+
+                app.mode = AppMode::ConfirmDeleteGroup;
+            } else if app.selected_entry().is_some() {
                 app.mode = AppMode::ConfirmDelete;
             }
         }
@@ -120,12 +134,75 @@ fn handle_normal(app: &mut crate::app::App, key: KeyCode) {
     }
 }
 
+fn handle_new_group(app: &mut crate::app::App, key: KeyCode) {
+    match key {
+        KeyCode::Backspace => {
+            app.new_group_input.pop();
+        }
+        KeyCode::Char(c) => {
+            app.new_group_input.push(c);
+        }
+        KeyCode::Esc => {
+            app.mode = AppMode::Normal;
+        }
+        KeyCode::Enter => {
+            app.groups.push(Group {
+                name: app.new_group_input.clone(),
+                icon: "+",
+            });
+
+            match app.save() {
+                Ok(_) => app.clipboard_msg = Some("✓ Groupe ajouté".to_string()),
+                Err(_) => app.clipboard_msg = Some("✗ Erreur lors de l'ajout".to_string()),
+            };
+
+            app.mode = AppMode::Normal;
+        }
+        _ => {}
+    }
+}
+
+fn handle_confirm_delete_group(app: &mut crate::app::App, key: KeyCode) {
+    match key {
+        KeyCode::Char('y') => {
+            if app.groups[app.selected_group].name != "Tous" {
+                if app.groups.len() <= 2 {
+                    app.clipboard_msg =
+                        Some("✗ Impossible de supprimer le dernier groupe".to_string());
+                    app.mode = AppMode::Normal;
+                    return;
+                }
+
+                let deleted_group = app.groups[app.selected_group].name.clone();
+                for entry in app.entries.iter_mut() {
+                    if entry.group == deleted_group {
+                        entry.group = app.groups[1].name.clone();
+                    }
+                }
+
+                app.groups.remove(app.selected_group);
+                app.selected_group = 0;
+                update_filter(app);
+                match app.save() {
+                    Ok(_) => app.clipboard_msg = Some("✓ Mot de passe supprimé".to_string()),
+                    Err(_) => {
+                        app.clipboard_msg = Some("✗ Erreur lors de la suppréssion".to_string())
+                    }
+                };
+            }
+
+            app.mode = AppMode::Normal;
+        }
+        KeyCode::Char('n') => {
+            app.mode = AppMode::Normal;
+        }
+        _ => {}
+    }
+}
+
 fn handle_confirm_delete(app: &mut crate::app::App, key: KeyCode) {
     match key {
         KeyCode::Char('y') => {
-            if app.selected_entry().is_some() {
-                app.mode = AppMode::ConfirmDelete;
-            }
             if app.selected_entry().is_some() {
                 app.entries.remove(app.filtered_indices[app.selected_entry]);
                 update_filter(app);
@@ -141,6 +218,8 @@ fn handle_confirm_delete(app: &mut crate::app::App, key: KeyCode) {
                     app.selected_entry -= 1;
                 }
             }
+
+            app.mode = AppMode::Normal;
         }
         KeyCode::Char('n') => {
             app.mode = AppMode::Normal;

@@ -4,6 +4,7 @@ use rand::RngExt;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
+use crate::app::Group;
 use crate::{
     app::Entry,
     crypto::{self, CryptoError},
@@ -25,14 +26,19 @@ pub struct VaultFile {
     ciphertext: String,
 }
 
-pub fn save(entries: &[Entry], password: &str, path: &Path) -> Result<(), VaultError> {
-    let serialized_entries = serde_json::to_vec(entries).map_err(VaultError::Serialization)?;
+#[derive(Serialize, Deserialize)]
+pub struct VaultData {
+    pub groups: Vec<Group>,
+    pub entries: Vec<Entry>,
+}
+
+pub fn save(data: &VaultData, password: &str, path: &Path) -> Result<(), VaultError> {
+    let serialized = serde_json::to_vec(&data).map_err(VaultError::Serialization)?;
 
     let salt: [u8; 16] = rand::rng().random();
     let key = crypto::derive_key(password, &salt).map_err(VaultError::Crypto)?;
 
-    let (ciphertext, nonce) =
-        crypto::encrypt(&serialized_entries, &key).map_err(VaultError::Crypto)?;
+    let (ciphertext, nonce) = crypto::encrypt(&serialized, &key).map_err(VaultError::Crypto)?;
 
     let vault_file = VaultFile {
         salt: STANDARD.encode(&salt),
@@ -49,7 +55,7 @@ pub fn save(entries: &[Entry], password: &str, path: &Path) -> Result<(), VaultE
     Ok(())
 }
 
-pub fn load(password: &str, path: &Path) -> Result<Vec<Entry>, VaultError> {
+pub fn load(password: &str, path: &Path) -> Result<VaultData, VaultError> {
     let serialized_vault = std::fs::read(path).map_err(VaultError::Io)?;
 
     let vault_file = serde_json::from_slice::<VaultFile>(&serialized_vault)
@@ -72,8 +78,8 @@ pub fn load(password: &str, path: &Path) -> Result<Vec<Entry>, VaultError> {
     let key = crypto::derive_key(password, &salt).map_err(VaultError::Crypto)?;
 
     let data = crypto::decrypt(&ciphertext, &key, &nonce).map_err(VaultError::Crypto)?;
-    let entries =
-        serde_json::from_slice::<Vec<Entry>>(&data).map_err(VaultError::Deserialization)?;
+    let vault_data =
+        serde_json::from_slice::<VaultData>(&data).map_err(VaultError::Deserialization)?;
 
-    Ok(entries)
+    Ok(vault_data)
 }
