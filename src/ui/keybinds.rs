@@ -1,7 +1,6 @@
 use ratatui::{
     Frame,
     layout::Rect,
-    style::{Color, Style},
     text::{Line, Span},
     widgets::Paragraph,
 };
@@ -32,6 +31,12 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
             key_hint("↵", "enregistrer"),
             key_hint("Esc", "annuler"),
         ],
+        AppMode::NewGroup => vec![
+            key_hint("Tab", "champ suivant"),
+            key_hint("S-Tab", "précédent"),
+            key_hint("↵", "enregistrer"),
+            key_hint("Esc", "annuler"),
+        ],
         AppMode::Search => vec![
             key_hint("↵", "valider"),
             key_hint("Esc", "annuler"),
@@ -44,6 +49,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
             key_hint("Esc", "retour"),
         ],
         AppMode::ConfirmDelete => vec![key_hint("y", "Supprimer"), key_hint("n", "Annuler")],
+        AppMode::ConfirmDeleteGroup => vec![key_hint("y", "Supprimer"), key_hint("n", "Annuler")],
     };
 
     let mut spans = vec![];

@@ -64,7 +64,7 @@ fn handle_normal(app: &mut crate::app::App, key: KeyCode) {
         KeyCode::Char('n') => {
             if app.focus == FocusedPanel::Groups {
                 app.mode = AppMode::NewGroup;
-                app.new_group_input = String::new();
+                app.new_group_form = NewGroupForm::new();
             } else {
                 app.mode = AppMode::Popup;
                 app.form = NewEntryForm::new();
@@ -136,19 +136,29 @@ fn handle_normal(app: &mut crate::app::App, key: KeyCode) {
 
 fn handle_new_group(app: &mut crate::app::App, key: KeyCode) {
     match key {
+        KeyCode::Tab => {
+            app.new_group_form.focused_field = (app.form.focused_field + 1) % 2;
+        }
+        KeyCode::BackTab => {
+            if app.new_group_form.focused_field == 0 {
+                app.new_group_form.focused_field = 2;
+            } else {
+                app.new_group_form.focused_field -= 1;
+            }
+        }
         KeyCode::Backspace => {
-            app.new_group_input.pop();
+            app.new_group_form.fields[app.new_group_form.focused_field].pop();
         }
         KeyCode::Char(c) => {
-            app.new_group_input.push(c);
+            app.new_group_form.fields[app.new_group_form.focused_field].push(c);
         }
         KeyCode::Esc => {
             app.mode = AppMode::Normal;
         }
         KeyCode::Enter => {
             app.groups.push(Group {
-                name: app.new_group_input.clone(),
-                icon: "+",
+                name: app.new_group_form.fields[0].clone(),
+                icon: app.new_group_form.fields[1].clone(),
             });
 
             match app.save() {

@@ -1,7 +1,9 @@
 pub mod audit;
 pub mod confirm_delete;
+pub mod confirm_delete_group;
 pub mod keybinds;
 pub mod locked;
+pub mod new_group;
 pub mod panels;
 pub mod popup;
 pub mod searchbar;
@@ -56,6 +58,10 @@ pub fn render(frame: &mut Frame, app: &App) {
         popup::render(frame, app, area);
     } else if app.mode == AppMode::ConfirmDelete {
         confirm_delete::render(frame, app, area);
+    } else if app.mode == AppMode::NewGroup {
+        new_group::render(frame, app, area);
+    } else if app.mode == AppMode::ConfirmDeleteGroup {
+        confirm_delete_group::render(frame, app, area);
     }
 }
 

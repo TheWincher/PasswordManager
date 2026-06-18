@@ -1,0 +1,71 @@
+use ratatui::{
+    Frame,
+    layout::{Constraint, Layout, Rect},
+    style::{Color, Style},
+    widgets::{Block, Clear, Paragraph},
+};
+
+use crate::{
+    app::{App, NewEntryForm, NewGroupForm},
+    ui::utils::centered_rect,
+};
+
+pub fn render(frame: &mut Frame, app: &App, area: Rect) {
+    // Centrage : 50% de largeur, hauteur fixe
+    let popup_area = centered_rect(50, 8, area);
+
+    // On efface la zone derrière (effet overlay)
+    frame.render_widget(Clear, popup_area);
+
+    let title = if app.form.editing_index.is_some() {
+        " ✎ Éditer le groupe "
+    } else {
+        " ✚ Nouveau groupe "
+    };
+
+    let block = Block::bordered()
+        .title(title)
+        .border_style(Style::new().fg(Color::Blue))
+        .style(Style::new().bg(Color::Reset));
+
+    let inner = block.inner(popup_area);
+    frame.render_widget(block, popup_area);
+
+    // Layout vertical : un bloc par champ
+    let field_areas = Layout::vertical(
+        std::iter::repeat(Constraint::Length(3))
+            .take(2)
+            .collect::<Vec<_>>(),
+    )
+    .split(inner);
+
+    let names = NewGroupForm::field_names();
+
+    for (i, (name, field_area)) in names.iter().zip(field_areas.iter()).enumerate() {
+        let is_active = i == app.new_group_form.focused_field;
+
+        let border_style = if is_active {
+            Style::new().fg(Color::Blue)
+        } else {
+            Style::new().fg(Color::DarkGray)
+        };
+
+        // Pour le mot de passe, masque la valeur
+        let display_value = app.new_group_form.fields[i].clone();
+
+        // Curseur clignotant sur le champ actif
+        let content = if is_active {
+            format!("{}_", display_value) // '_' simule le curseur
+        } else {
+            display_value
+        };
+
+        let widget = Paragraph::new(content).block(
+            Block::bordered()
+                .title(format!(" {} ", name))
+                .border_style(border_style),
+        );
+
+        frame.render_widget(widget, *field_area);
+    }
+}

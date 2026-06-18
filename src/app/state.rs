@@ -15,7 +15,7 @@ pub struct Entry {
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Group {
     pub name: String,
-    pub icon: &'static str,
+    pub icon: String,
 }
 
 #[derive(PartialEq)]
@@ -59,5 +59,24 @@ impl NewEntryForm {
     }
     pub fn field_names() -> [&'static str; 4] {
         ["Titre", "URL", "Identifiant", "Mot de passe"]
+    }
+}
+
+pub struct NewGroupForm {
+    pub fields: [String; 2],
+    pub focused_field: usize,
+    pub editing_index: Option<usize>,
+}
+
+impl NewGroupForm {
+    pub fn new() -> Self {
+        Self {
+            fields: [String::new(), String::new()],
+            focused_field: 0,
+            editing_index: None,
+        }
+    }
+    pub fn field_names() -> [&'static str; 2] {
+        ["Nom", "Icon"]
     }
 }

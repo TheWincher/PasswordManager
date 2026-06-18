@@ -22,6 +22,10 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
             " INSERT ",
             Style::new().bg(Color::Green).fg(Color::White).bold(),
         ),
+        AppMode::NewGroup => (
+            " INSERT GROUP",
+            Style::new().bg(Color::Green).fg(Color::White).bold(),
+        ),
         AppMode::Search => (
             " SEARCH ",
             Style::new().bg(Color::Yellow).fg(Color::White).bold(),
@@ -32,6 +36,10 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
         ),
         AppMode::ConfirmDelete => (
             " DELETE  ",
+            Style::new().bg(Color::LightRed).fg(Color::White).bold(),
+        ),
+        AppMode::ConfirmDeleteGroup => (
+            " DELETE GROUP ",
             Style::new().bg(Color::LightRed).fg(Color::White).bold(),
         ),
     };
@@ -58,7 +66,6 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
         };
 
         let msg_widget = Paragraph::new(Line::from(vec![Span::styled(msg, msg_style)]))
-            .style(Style::new().bg(Color::DarkGray))
             .alignment(Alignment::Right);
 
         frame.render_widget(msg_widget, chunks[1]);

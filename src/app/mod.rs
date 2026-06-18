@@ -28,7 +28,7 @@ pub struct App {
     pub unlock_error: bool,
     pub vault_path: PathBuf,
     pub clipboard_msg: Option<String>,
-    pub new_group_input: String,
+    pub new_group_form: NewGroupForm,
 }
 
 impl App {
@@ -40,23 +40,23 @@ impl App {
             groups: vec![
                 Group {
                     name: "Tous".into(),
-                    icon: "★",
+                    icon: "★".into(),
                 },
                 Group {
                     name: "Web".into(),
-                    icon: "🌐",
+                    icon: "🌐".into(),
                 },
                 Group {
                     name: "Finance".into(),
-                    icon: "💳",
+                    icon: "💳".into(),
                 },
                 Group {
                     name: "Dev".into(),
-                    icon: "🔧",
+                    icon: "🔧".into(),
                 },
                 Group {
                     name: "Email".into(),
-                    icon: "📧",
+                    icon: "📧".into(),
                 },
             ],
             selected_group: 0,
@@ -71,7 +71,7 @@ impl App {
             audit_entry: 0,
             audit_focus: AuditFocus::Categories,
             master_password: String::new(),
-            new_group_input: String::new(),
+            new_group_form: NewGroupForm::new(),
             unlock_error: false,
             vault_path: dirs::home_dir()
                 .unwrap()
